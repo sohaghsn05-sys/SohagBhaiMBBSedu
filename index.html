@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="bn" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>সোহাগ ভাই এমবিবিএস এডুকেশন | AI Active Recall</title>
+    
+    <!-- Google Fonts: Hind Siliguri (Bengali) & Montserrat (English) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Academic & Medical Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PDF.js CDN for PDF rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bgDark: '#0B0914',
+                        cardDark: '#161224',
+                        cardHover: '#1E1833',
+                        purplePrimary: '#8B5CF6',
+                        purpleAccent: '#A855F7',
+                        purpleDeep: '#4C1D95',
+                    },
+                    fontFamily: {
+                        bengali: ['"Hind Siliguri"', 'sans-serif'],
+                        english: ['"Montserrat"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0B0914;
+            color: #FFFFFF;
+            font-family: 'Hind Siliguri', sans-serif;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 45%);
+        }
+
+        .font-en {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* 3D Flashcard Flip Mechanics */
+        .perspective-1000 {
+            perspective: 1200px;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-style: preserve-3d;
+        }
+
+        .flip-card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.5rem;
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0914;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2D244B;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8B5CF6;
+        }
+
+        /* Subtle Pulse Glow */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.25); }
+            50% { box-shadow: 0 0 35px rgba(168, 85, 247, 0.45); }
+        }
+        .glow-purple {
+            animation: pulseGlow 3s infinite;
+        }
+
+        /* Loader Scanning Line */
+        @keyframes scanLine {
+            0% { top: 0%; opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { top: 96%; opacity: 0.2; }
+        }
+        .scanner-bar {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #A855F7, #fff, #A855F7, transparent);
+            box-shadow: 0 0 15px #A855F7;
+            animation: scanLine 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-purplePrimary selection:text-white">
+
+    <!-- Toast Notification Container (Replaces alert) -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Header & Navigation -->
+    <header class="sticky top-0 z-40 backdrop-blur-xl bg-[#0B0914]/85 border-b border-purple-500/20">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand Logo & Name -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="resetToHome()">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-purplePrimary to-purpleAccent flex items-center justify-center shadow-lg shadow-purple-600/30 border border-white/15">
+                    <i class="fa-solid fa-stethoscope text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight bg-gradient-to-r from-white via-purple-100 to-purple-300 bg-clip-text text-transparent leading-tight">
+                        সোহাগ ভাই এমবিবিএস এডুকেশন
+                    </h1>
+                    <p class="text-[11px] sm:text-xs text-purple-300/80 font-en font-medium tracking-wider uppercase flex items-center gap-1.5">
+                        <i class="fa-solid fa-sparkles text-purpleAccent text-[10px]"></i>
+                        AI-Powered Active Recall & Exam Prep
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Controls -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Study Mode Selector -->
+                <div class="hidden md:flex items-center bg-[#161224] border border-purple-500/25 rounded-xl p-1">
+                    <select id="difficulty-select" class="bg-transparent text-xs sm:text-sm text-purple-100 font-medium px-2.5 py-1.5 focus:outline-none cursor-pointer">
+                        <option value="medical" class="bg-[#161224]">🩺 Medical / High-Yield Viva</option>
+                        <option value="standard" class="bg-[#161224]">📚 Standard Academic Exam</option>
+                        <option value="conceptual" class="bg-[#161224]">🧠 Deep Conceptual & Why/How</option>
+                    </select>
+                </div>
+
+                <!-- Language Toggle -->
+                <button id="lang-toggle-btn" onclick="toggleLanguageMode()" class="px-3 py-2 rounded-xl bg-[#161224] hover:bg-[#1E1833] border border-purple-500/30 text-xs sm:text-sm font-medium text-purple-200 transition flex items-center gap-1.5" title="প্রশ্নের ভাষা পরিবর্তন করুন">
+                    <i class="fa-solid fa-language text-purpleAccent"></i>
+                    <span id="lang-label">বাংলা + Eng</span>
+                </button>
+
+                <!-- Demo Mode Button -->
+                <button onclick="loadDemoCards()" class="px-3.5 py-2 rounded-xl bg-purplePrimary/20 hover:bg-purplePrimary/30 border border-purplePrimary/50 text-xs sm:text-sm font-semibold text-purple-200 transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles text-purpleAccent"></i>
+                    <span>ডেমো দেখুন</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
+
+        <!-- SECTION 1: UPLOAD & AI ANALYSIS SETUP -->
+        <section id="upload-section" class="transition-all duration-300">
+            <!-- Hero Intro -->
+            <div class="text-center max-w-2xl mx-auto mb-8">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-950/70 border border-purple-500/30 text-purple-300 text-xs sm:text-sm font-medium mb-4">
+                    <i class="fa-solid fa-brain text-purpleAccent"></i>
+                    <span>পড়া মনে রাখার সবচেয়ে বৈজ্ঞানিক পদ্ধতি — Active Recall</span>
+                </div>
+                <h2 class="text-2xl sm:text-4xl font-bold text-white mb-3 leading-snug">
+                    বইয়ের পেজ বা PDF আপলোড করুন, <br class="hidden sm:inline">
+                    <span class="bg-gradient-to-r from-purplePrimary to-purpleAccent bg-clip-text text-transparent">AI আপনাকে ভাইভা ও পরীক্ষার প্রশ্ন ধরবে!</span>
+                </h2>
+                <p class="text-gray-400 text-sm sm:text-base leading-relaxed">
+                    যেকোনো সাবজেক্টের বইয়ের পৃষ্ঠার ছবি বা পিডিএফ দিন। এআই গুরুত্বপূর্ণ টপিক বিশ্লেষণ করে ফ্ল্যাশকার্ড তৈরি করবে—আগে নিজে উত্তর বলার চেষ্টা করুন, তারপর কার্ডে ক্লিক করে উত্তর মিলিয়ে নিন।
+                </p>
+            </div>
+
+            <!-- Main Upload Card -->
+            <div class="bg-[#161224] border border-purple-500/25 rounded-3xl p-5 sm:p-8 shadow-2xl shadow-black/60">
+                
+                <!-- Mobile Mode Selector -->
+                <div class="md:hidden mb-5">
+                    <label class="block text-xs text-purple-300 mb-1.5 font-medium">প্রশ্নের ধরন নির্বাচন করুন:</label>
+                    <select id="difficulty-select-mobile" onchange="syncDifficulty(this.value)" class="w-full bg-[#0B0914] border border-purple-500/30 rounded-xl text-sm text-purple-100 px-3.5 py-2.5 focus:outline-none focus:border-purplePrimary">
+                        <option value="medical">🩺 Medical / High-Yield Viva</option>
+                        <option value="standard">📚 Standard Academic Exam</option>
+                        <option value="conceptual">🧠 Deep Conceptual & Why/How</option>
+                    </select>
+                </div>
+
+                <!-- Drag & Drop Zone -->
+                <div id="drop-zone" class="relative border-2 border-dashed border-purple-500/40 hover:border-purpleAccent bg-[#0B0914]/60 hover:bg-[#0B0914]/90 rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition-all duration-200 group">
+                    <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp,application/pdf" class="hidden">
+                    
+                    <div id="drop-placeholder" class="flex flex-col items-center">
+                        <div class="w-16 h-16 rounded-2xl bg-purple-950/80 border border-purple-500/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-purpleAccent"></i>
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-semibold text-white mb-1.5">
+                            বইয়ের ছবি বা PDF ফাইল এখানে ছেড়ে দিন
+                        </h3>
+                        <p class="text-xs sm:text-sm text-gray-400 mb-4">
+                            অথবা ক্লিক করে ফাইল সিলেক্ট করুন (JPG, PNG, WEBP, PDF সাপোর্টেড)
+                        </p>
+                        <span class="px-5 py-2.5 rounded-xl bg-purplePrimary hover:bg-purpleAccent text-white text-sm font-semibold transition shadow-lg shadow-purple-600/25">
+                            <i class="fa-solid fa-folder-open mr-1.5"></i> ফাইল বাছাই করুন
+                        </span>
+                    </div>
+
+                    <!-- Preview Container (Hidden initially) -->
+                    <div id="preview-container" class="hidden flex-col items-center">
+                        <div class="relative max-w-md w-full rounded-2xl overflow-hidden border border-purple-500/40 bg-[#0B0914] shadow-xl mb-4">
+                            <img id="preview-image" src="" alt="Uploaded Page Preview" class="w-full max-h-72 object-contain mx-auto">
+                            <button type="button" onclick="clearSelectedFile(event)" class="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition" title="ফাইল বাতিল করুন">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm text-purple-200">
+                            <span id="file-name-badge" class="px-3 py-1 rounded-lg bg-purple-950/90 border border-purple-500/30 font-medium truncate max-w-[240px]">
+                                document.pdf
+                            </span>
+
+                            <!-- PDF Page Selector (Visible only for PDFs) -->
+                            <div id="pdf-page-controls" class="hidden items-center gap-2 bg-purple-950/90 border border-purple-500/40 px-3 py-1 rounded-lg">
+                                <label for="pdf-page-select" class="text-purple-300 font-medium">PDF পেজ নম্বর:</label>
+                                <select id="pdf-page-select" onchange="renderSelectedPdfPage()" class="bg-[#0B0914] text-white border border-purple-500/40 rounded px-2 py-0.5 focus:outline-none">
+                                </select>
+                                <span id="pdf-total-pages" class="text-gray-400 text-xs">/ 1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Optional Custom Focus Note -->
+                <div class="mt-6">
+                    <label for="custom-focus" class="block text-sm font-medium text-purple-200 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-bullseye text-purpleAccent"></i>
+                        <span>বিশেষ কোনো নির্দেশনা বা টপিক ফোকাস (ঐচ্ছিক):</span>
+                    </label>
+                    <input type="text" id="custom-focus" placeholder="যেমন: ক্লিনিক্যাল কোরিলেশন, সংজ্ঞা, পার্থক্য বা ভাইভা বোর্ডের গুরুত্বপূর্ণ প্রশ্নগুলো ধরো..." class="w-full bg-[#0B0914] border border-purple-500/30 focus:border-purpleAccent rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none transition">
+                </div>
+
+                <!-- Question Count Selector -->
+                <div class="mt-5 p-4 rounded-2xl bg-[#0B0914]/80 border border-purple-500/25">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <label class="text-sm font-medium text-purple-200 flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-purpleAccent"></i>
+                            <span>কয়টি প্রশ্ন (Flashcards) তৈরি করতে চান?</span>
+                        </label>
+                        <span id="selected-count-badge" class="px-3 py-0.5 rounded-full bg-purplePrimary/20 border border-purplePrimary/40 text-purpleAccent text-xs font-bold">
+                            নির্বাচিত: ১০টি প্রশ্ন
+                        </span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <!-- Quick Preset Pills -->
+                        <button type="button" onclick="selectQuestionCount(5)" data-count="5" class="q-count-btn px-3.5 py-2 rounded-xl border border-purple-500/30 bg-[#161224] hover:border-purpleAccent text-xs sm:text-sm font-semibold text-purple-200 transition">
+                            ৫টি
+                        </button>
+                        <button type="button" onclick="selectQuestionCount(10)" data-count="10" class="q-count-btn px-3.5 py-2 rounded-xl border border-purpleAccent bg-purplePrimary text-xs sm:text-sm font-bold text-white shadow-md shadow-purple-600/30 transition">
+                            ১০টি
+                        </button>
+                        <button type="button" onclick="selectQuestionCount(15)" data-count="15" class="q-count-btn px-3.5 py-2 rounded-xl border border-purple-500/30 bg-[#161224] hover:border-purpleAccent text-xs sm:text-sm font-semibold text-purple-200 transition">
+                            ১৫টি
+                        </button>
+                        <button type="button" onclick="selectQuestionCount(20)" data-count="20" class="q-count-btn px-3.5 py-2 rounded-xl border border-purple-500/30 bg-[#161224] hover:border-purpleAccent text-xs sm:text-sm font-semibold text-purple-200 transition">
+                            ২০টি
+                        </button>
+                        <button type="button" onclick="selectQuestionCount(30)" data-count="30" class="q-count-btn px-3.5 py-2 rounded-xl border border-purple-500/30 bg-[#161224] hover:border-purpleAccent text-xs sm:text-sm font-semibold text-purple-200 transition">
+                            ৩০টি
+                        </button>
+
+                        <!-- Custom Number Input -->
+                        <div class="flex items-center gap-2 ml-auto bg-[#161224] border border-purple-500/30 focus-within:border-purpleAccent rounded-xl px-3 py-1.5">
+                            <span class="text-xs text-gray-400">নিজের সংখ্যা:</span>
+                            <input type="number" id="custom-question-count" min="3" max="50" value="10" oninput="handleCustomCountInput(this.value)" class="w-14 bg-transparent text-center text-sm font-bold text-white focus:outline-none">
+                            <span class="text-xs text-purple-300">টি</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Action Button -->
+                <div class="mt-6 flex flex-col sm:flex-row items-center gap-3">
+                    <button id="generate-btn" onclick="startAiAnalysis()" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-purplePrimary to-purpleAccent hover:from-purple-500 hover:to-purple-400 text-white font-bold text-base sm:text-lg shadow-xl shadow-purple-600/30 transition transform active:scale-[0.99] flex items-center justify-center gap-2.5 cursor-pointer">
+                        <i class="fa-solid fa-sparkles"></i>
+                        <span>এআই অ্যানালাইসিস ও প্রশ্ন তৈরি করুন</span>
+                    </button>
+                </div>
+
+                <!-- Loading Progress Overlay -->
+                <div id="loading-panel" class="hidden mt-6 p-6 rounded-2xl bg-[#0B0914] border border-purple-500/40 text-center relative overflow-hidden">
+                    <div class="scanner-bar"></div>
+                    <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-purplePrimary/20 border border-purpleAccent flex items-center justify-center">
+                        <i class="fa-solid fa-microscope text-2xl text-purpleAccent animate-bounce"></i>
+                    </div>
+                    <h4 id="loading-title" class="text-base sm:text-lg font-bold text-white mb-1">
+                        সোহাগ ভাই AI আপনার নোটটি পড়ছে...
+                    </h4>
+                    <p id="loading-step" class="text-xs sm:text-sm text-purple-300">
+                        গুরুত্বপূর্ণ কনসেপ্ট, সংজ্ঞা এবং সম্ভাব্য পরীক্ষার প্রশ্ন শনাক্ত করা হচ্ছে...
+                    </p>
+                </div>
+            </div>
+
+            <!-- How It Works Mini Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+                <div class="bg-[#161224]/70 border border-purple-500/15 rounded-2xl p-4 flex items-start gap-3.5">
+                    <div class="w-9 h-9 rounded-xl bg-purple-900/50 text-purpleAccent flex items-center justify-center font-en font-bold shrink-0">1</div>
+                    <div>
+                        <h4 class="font-semibold text-white text-sm">পেজ আপলোড</h4>
+                        <p class="text-xs text-gray-400 mt-0.5">বইয়ের পৃষ্ঠার ছবি বা পিডিএফ ফাইল আপলোড করুন।</p>
+                    </div>
+                </div>
+                <div class="bg-[#161224]/70 border border-purple-500/15 rounded-2xl p-4 flex items-start gap-3.5">
+                    <div class="w-9 h-9 rounded-xl bg-purple-900/50 text-purpleAccent flex items-center justify-center font-en font-bold shrink-0">2</div>
+                    <div>
+                        <h4 class="font-semibold text-white text-sm">নিজে উত্তর ভাবুন</h4>
+                        <p class="text-xs text-gray-400 mt-0.5">প্রশ্ন দেখে না দেখে মনে মনে বা মুখে উত্তর বলুন।</p>
+                    </div>
+                </div>
+                <div class="bg-[#161224]/70 border border-purple-500/15 rounded-2xl p-4 flex items-start gap-3.5">
+                    <div class="w-9 h-9 rounded-xl bg-purple-900/50 text-purpleAccent flex items-center justify-center font-en font-bold shrink-0">3</div>
+                    <div>
+                        <h4 class="font-semibold text-white text-sm">ফ্লিপ করে উত্তর দেখুন</h4>
+                        <p class="text-xs text-gray-400 mt-0.5">কার্ডে ক্লিক করে সঠিক উত্তর ও ক্লিনিক্যাল টিপস মিলিয়ে নিন।</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: ACTIVE RECALL 3D FLASHCARD ARENA -->
+        <section id="arena-section" class="hidden">
+            
+            <!-- Top Arena Controls & Mastery Progress -->
+            <div class="bg-[#161224] border border-purple-500/25 rounded-2xl p-4 sm:p-5 mb-6 shadow-lg">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div>
+                        <span class="text-xs text-purple-300 font-medium uppercase tracking-wider font-en">Active Recall Session</span>
+                        <h2 id="topic-heading" class="text-lg sm:text-xl font-bold text-white">গুরুত্বপূর্ণ প্রশ্নাবলী</h2>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Filter Weak Cards Toggle -->
+                        <button id="filter-weak-btn" onclick="toggleWeakFilter()" class="px-3 py-1.5 rounded-xl bg-[#0B0914] hover:bg-amber-950/40 border border-amber-500/30 text-xs font-medium text-amber-300 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span id="filter-weak-label">কঠিন প্রশ্ন রিভিউ (0)</span>
+                        </button>
+
+                        <!-- View Mode Toggle (3D Flip vs Grid All) -->
+                        <button id="view-toggle-btn" onclick="toggleArenaView()" class="px-3 py-1.5 rounded-xl bg-[#0B0914] hover:bg-purple-950/60 border border-purple-500/30 text-xs font-medium text-purple-200 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-table-cells-large text-purpleAccent"></i>
+                            <span id="view-toggle-label">সব প্রশ্ন একসাথে দেখুন</span>
+                        </button>
+
+                        <!-- Upload New Page -->
+                        <button onclick="resetToHome()" class="px-3 py-1.5 rounded-xl bg-purplePrimary/20 hover:bg-purplePrimary/30 border border-purplePrimary/40 text-xs font-semibold text-purple-200 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>নতুন পেজ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mastery Progress Bar -->
+                <div class="flex items-center gap-3">
+                    <div class="flex-grow h-2.5 bg-[#0B0914] rounded-full overflow-hidden border border-purple-500/20">
+                        <div id="mastery-bar" class="h-full bg-gradient-to-r from-purplePrimary to-emerald-400 transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <span id="mastery-stats" class="text-xs font-semibold text-purple-200 whitespace-nowrap">
+                        মনে আছে: ০ / ০
+                    </span>
+                </div>
+            </div>
+
+            <!-- SINGLE 3D FLASHCARD VIEW -->
+            <div id="single-card-view">
+                <!-- Card Wrapper -->
+                <div class="perspective-1000 w-full max-w-3xl mx-auto h-[410px] sm:h-[440px] cursor-pointer select-none" onclick="flipCurrentCard()">
+                    <div id="flashcard-inner" class="flip-card-inner">
+                        
+                        <!-- FRONT OF CARD (QUESTION) -->
+                        <div class="flip-card-front bg-gradient-to-br from-[#1A152E] via-[#161224] to-[#110D1D] border-2 border-purple-500/35 hover:border-purpleAccent/70 p-6 sm:p-10 flex flex-col justify-between shadow-2xl glow-purple">
+                            <!-- Top Row: Question Counter & Tag -->
+                            <div class="flex items-center justify-between gap-2">
+                                <span id="card-counter" class="px-3.5 py-1 rounded-full bg-purple-950/90 border border-purple-500/40 text-purple-200 text-xs sm:text-sm font-bold">
+                                    প্রশ্ন ১ / ৮
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span id="card-status-badge" class="hidden px-2.5 py-1 rounded-full text-xs font-semibold"></span>
+                                    <span id="card-tag" class="px-3 py-1 rounded-full bg-purplePrimary/20 border border-purplePrimary/40 text-purpleAccent text-xs font-en font-semibold">
+                                        High-Yield Viva
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Center: The Question -->
+                            <div class="my-auto py-4 text-center overflow-y-auto max-h-[240px]">
+                                <p class="text-xs uppercase tracking-widest text-purple-400 font-en font-semibold mb-2">QUESTION / প্রশ্ন</p>
+                                <h3 id="card-question" class="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-relaxed">
+                                    প্রশ্ন লোড হচ্ছে...
+                                </h3>
+                            </div>
+
+                            <!-- Bottom Prompt -->
+                            <div class="text-center pt-3 border-t border-purple-500/15 flex items-center justify-center gap-2 text-purple-300 text-xs sm:text-sm font-medium">
+                                <i class="fa-solid fa-rotate text-purpleAccent animate-spin" style="animation-duration: 8s;"></i>
+                                <span>উত্তর দেখতে কার্ডের ওপর ক্লিক করুন (অথবা Space চাপুন)</span>
+                            </div>
+                        </div>
+
+                        <!-- BACK OF CARD (ANSWER) -->
+                        <div class="flip-card-back bg-gradient-to-br from-[#1F1738] via-[#161224] to-[#0F0C1B] border-2 border-purpleAccent p-6 sm:p-9 flex flex-col justify-between shadow-2xl">
+                            <!-- Top Row -->
+                            <div class="flex items-center justify-between border-b border-purple-500/20 pb-3">
+                                <span class="text-xs sm:text-sm font-bold text-emerald-400 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-check"></i> সঠিক উত্তর (Answer)
+                                </span>
+                                <button type="button" onclick="event.stopPropagation(); flipCurrentCard()" class="text-xs text-purple-300 hover:text-white flex items-center gap-1 bg-purple-950/70 px-2.5 py-1 rounded-lg border border-purple-500/30">
+                                    <i class="fa-solid fa-arrow-rotate-left"></i> প্রশ্ন দেখুন
+                                </button>
+                            </div>
+
+                            <!-- Center: Answer & Key Clinical/Exam Pearl -->
+                            <div class="my-auto py-3 overflow-y-auto max-h-[245px] text-left space-y-3 pr-1" onclick="event.stopPropagation()">
+                                <div id="card-answer" class="text-base sm:text-lg text-gray-100 leading-relaxed whitespace-pre-line font-normal">
+                                    উত্তর এখানে দেখাবে...
+                                </div>
+
+                                <!-- High-Yield Key Point / Mnemonic Box -->
+                                <div id="card-pearl-box" class="p-3.5 rounded-xl bg-purple-950/60 border border-purple-500/30 text-xs sm:text-sm text-purple-200">
+                                    <span class="font-bold text-purpleAccent block mb-0.5">
+                                        <i class="fa-solid fa-lightbulb mr-1"></i> পরীক্ষার টিপস / Key Point:
+                                    </span>
+                                    <span id="card-pearl">গুরুত্বপূর্ণ তথ্য</span>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Active Recall Self-Assessment Buttons -->
+                            <div class="pt-3 border-t border-purple-500/20 flex items-center justify-center gap-3" onclick="event.stopPropagation()">
+                                <button type="button" onclick="markCardStatus('hard')" class="flex-1 py-2.5 px-4 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-repeat"></i>
+                                    <span>আবার পড়বো (Hard)</span>
+                                </button>
+                                <button type="button" onclick="markCardStatus('mastered')" class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-300 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-check-double"></i>
+                                    <span>মনে আছে (Mastered)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Navigation Controls Below Card -->
+                <div class="max-w-3xl mx-auto mt-6 flex items-center justify-between gap-4">
+                    <button id="prev-btn" onclick="prevCard()" class="px-5 py-3 rounded-2xl bg-[#161224] hover:bg-[#1E1833] border border-purple-500/30 text-white font-semibold text-sm transition flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-chevron-left text-purpleAccent"></i>
+                        <span>পূর্ববর্তী</span>
+                    </button>
+
+                    <button onclick="flipCurrentCard()" class="px-6 py-3 rounded-2xl bg-purplePrimary hover:bg-purpleAccent text-white font-bold text-sm shadow-lg shadow-purple-600/25 transition flex items-center gap-2">
+                        <i class="fa-solid fa-sync-alt"></i>
+                        <span>কার্ড উল্টান (Flip)</span>
+                    </button>
+
+                    <button id="next-btn" onclick="nextCard()" class="px-5 py-3 rounded-2xl bg-[#161224] hover:bg-[#1E1833] border border-purple-500/30 text-white font-semibold text-sm transition flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                        <span>পরবর্তী</span>
+                        <i class="fa-solid fa-chevron-right text-purpleAccent"></i>
+                    </button>
+                </div>
+
+                <p class="text-center text-xs text-gray-500 mt-4 hidden sm:block">
+                    কীবোর্ড শর্টকাট: <kbd class="px-1.5 py-0.5 bg-[#161224] border border-purple-500/30 rounded text-purple-300">Space</kbd> কার্ড উল্টাতে, <kbd class="px-1.5 py-0.5 bg-[#161224] border border-purple-500/30 rounded text-purple-300">←</kbd> <kbd class="px-1.5 py-0.5 bg-[#161224] border border-purple-500/30 rounded text-purple-300">→</kbd> কার্ড পরিবর্তন করতে
+                </p>
+            </div>
+
+            <!-- ALL CARDS GRID VIEW (Hidden initially) -->
+            <div id="grid-cards-view" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Populated dynamically via JS -->
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-purple-500/15 py-5 text-center text-xs text-gray-500">
+        <p>© 2026 <span class="text-purple-300 font-semibold">সোহাগ ভাই এমবিবিএস এডুকেশন</span> — Active Recall Learning Platform</p>
+    </footer>
+
+    <!-- Application Logic -->
+    <script>
+        // Configure PDF.js worker
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
+        // Application State
+        const state = {
+            selectedFile: null,
+            pdfDoc: null,
+            currentPdfPage: 1,
+            totalPdfPages: 1,
+            imageBase64: null,       // Pure base64 string without data prefix
+            imageMimeType: 'image/jpeg',
+            languageMode: 'bn_en',   // 'bn_en' (Bengali + English terms) or 'en' (English)
+            difficulty: 'medical',
+            questionCount: 10,       // Default number of flashcards to generate
+            cards: [],               // Array of { id, tag, question, answer, pearl, status: 'unseen'|'hard'|'mastered' }
+            currentIndex: 0,
+            isFlipped: false,
+            filterWeakOnly: false,
+            viewMode: 'single',      // 'single' | 'grid'
+            topicTitle: 'অধ্যায় ভিত্তিক Active Recall'
+        };
+
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const dropPlaceholder = document.getElementById('drop-placeholder');
+        const previewContainer = document.getElementById('preview-container');
+        const previewImage = document.getElementById('preview-image');
+        const fileNameBadge = document.getElementById('file-name-badge');
+        const pdfPageControls = document.getElementById('pdf-page-controls');
+        const pdfPageSelect = document.getElementById('pdf-page-select');
+        const pdfTotalPages = document.getElementById('pdf-total-pages');
+
+        // Toast Notification System (Replaces alert)
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                info: 'bg-[#161224] border-purple-500/50 text-purple-100',
+                success: 'bg-[#13241E] border-emerald-500/50 text-emerald-200',
+                error: 'bg-[#26121A] border-red-500/50 text-red-200',
+                warning: 'bg-[#261E12] border-amber-500/50 text-amber-200'
+            };
+
+            const icons = {
+                info: 'fa-circle-info text-purpleAccent',
+                success: 'fa-circle-check text-emerald-400',
+                error: 'fa-triangle-exclamation text-red-400',
+                warning: 'fa-bolt text-amber-400'
+            };
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-md text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-0 ${colors[type] || colors.info}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icons[type] || icons.info} text-base shrink-0"></i>
+                <span class="flex-grow">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Sync Difficulty Dropdowns
+        function syncDifficulty(val) {
+            state.difficulty = val;
+            document.getElementById('difficulty-select').value = val;
+            document.getElementById('difficulty-select-mobile').value = val;
+        }
+        document.getElementById('difficulty-select').addEventListener('change', (e) => syncDifficulty(e.target.value));
+
+        // Question Count Selector Logic
+        function selectQuestionCount(count) {
+            const validCount = Math.max(3, Math.min(50, parseInt(count, 10) || 10));
+            state.questionCount = validCount;
+
+            // Update custom input box
+            const customInput = document.getElementById('custom-question-count');
+            if (customInput) customInput.value = validCount;
+
+            // Update badge text
+            const badge = document.getElementById('selected-count-badge');
+            if (badge) badge.textContent = `নির্বাচিত: ${toBengaliNumber(validCount)}টি প্রশ্ন`;
+
+            // Update active pill styling
+            document.querySelectorAll('.q-count-btn').forEach(btn => {
+                const btnVal = parseInt(btn.getAttribute('data-count'), 10);
+                if (btnVal === validCount) {
+                    btn.className = 'q-count-btn px-3.5 py-2 rounded-xl border border-purpleAccent bg-purplePrimary text-xs sm:text-sm font-bold text-white shadow-md shadow-purple-600/30 transition';
+                } else {
+                    btn.className = 'q-count-btn px-3.5 py-2 rounded-xl border border-purple-500/30 bg-[#161224] hover:border-purpleAccent text-xs sm:text-sm font-semibold text-purple-200 transition';
+                }
+            });
+        }
+
+        function handleCustomCountInput(val) {
+            const parsed = parseInt(val, 10);
+            if (isNaN(parsed)) return;
+            const clamped = Math.max(3, Math.min(50, parsed));
+            state.questionCount = clamped;
+
+            const badge = document.getElementById('selected-count-badge');
+            if (badge) badge.textContent = `নির্বাচিত: ${toBengaliNumber(clamped)}টি প্রশ্ন`;
+
+            document.querySelectorAll('.q-count-btn').forEach(btn => {
+                const btnVal = parseInt(btn.getAttribute('data-count'), 10);
+                if (btnVal === clamped) {
+                    btn.className = 'q-count-btn px-3.5 py-2 rounded-xl border border-purpleAccent bg-purplePrimary text-xs sm:text-sm font-bold text-white shadow-md shadow-purple-600/30 transition';
+                } else {
+                    btn.className = 'q-count-btn px-3.5 py-2 rounded-xl border border-purple-500/30 bg-[#161224] hover:border-purpleAccent text-xs sm:text-sm font-semibold text-purple-200 transition';
+                }
+            });
+        }
+
+        // Toggle Language Mode
+        function toggleLanguageMode() {
+            const label = document.getElementById('lang-label');
+            if (state.languageMode === 'bn_en') {
+                state.languageMode = 'en';
+                label.textContent = 'English Only';
+                showToast('প্রশ্ন ও উত্তর এখন ইংরেজিতে তৈরি হবে।', 'info');
+            } else {
+                state.languageMode = 'bn_en';
+                label.textContent = 'বাংলা + Eng';
+                showToast('প্রশ্ন ও উত্তর সহজ বাংলায় (মেডিকেল/টেকনিক্যাল টার্মসহ) তৈরি হবে।', 'info');
+            }
+        }
+
+        // Drag & Drop Handlers
+        dropZone.addEventListener('click', (e) => {
+            if (e.target.closest('select') || e.target.closest('button')) return;
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-purpleAccent', 'bg-purple-950/20');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-purpleAccent', 'bg-purple-950/20');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-purpleAccent', 'bg-purple-950/20');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFileSelection(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleFileSelection(e.target.files[0]);
+            }
+        });
+
+        // Process Uploaded Image or PDF
+        async function handleFileSelection(file) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+            if (!validTypes.includes(file.type)) {
+                showToast('অনুগ্রহ করে JPG, PNG, WEBP ছবি অথবা PDF ফাইল আপলোড করুন।', 'error');
+                return;
+            }
+
+            state.selectedFile = file;
+            fileNameBadge.textContent = file.name;
+            dropPlaceholder.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
+            previewContainer.classList.add('flex');
+
+            if (file.type === 'application/pdf') {
+                try {
+                    showToast('PDF লোড হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...', 'info');
+                    const arrayBuffer = await file.arrayBuffer();
+                    state.pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    state.totalPdfPages = state.pdfDoc.numPages;
+                    state.currentPdfPage = 1;
+
+                    // Populate page selector
+                    pdfPageSelect.innerHTML = '';
+                    for (let i = 1; i <= state.totalPdfPages; i++) {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        opt.textContent = `পেজ ${i}`;
+                        pdfPageSelect.appendChild(opt);
+                    }
+                    pdfTotalPages.textContent = `/ ${state.totalPdfPages}`;
+                    pdfPageControls.classList.remove('hidden');
+                    pdfPageControls.classList.add('flex');
+
+                    await renderSelectedPdfPage();
+                } catch (err) {
+                    console.error(err);
+                    showToast('PDF ফাইলটি পড়তে সমস্যা হয়েছে। অন্য ফাইল চেষ্টা করুন।', 'error');
+                }
+            } else {
+                // Standard Image File
+                pdfPageControls.classList.add('hidden');
+                pdfPageControls.classList.remove('flex');
+                state.pdfDoc = null;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const dataUrl = event.target.result;
+                    previewImage.src = dataUrl;
+                    state.imageMimeType = file.type;
+                    state.imageBase64 = dataUrl.split(',')[1];
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Render Specific PDF Page to Canvas -> Base64 Image for Gemini Vision
+        async function renderSelectedPdfPage() {
+            if (!state.pdfDoc) return;
+            const pageNum = parseInt(pdfPageSelect.value, 10) || 1;
+            state.currentPdfPage = pageNum;
+
+            const page = await state.pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1.8 }); // High crisp resolution for text recognition
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+            previewImage.src = dataUrl;
+            state.imageMimeType = 'image/jpeg';
+            state.imageBase64 = dataUrl.split(',')[1];
+        }
+
+        function clearSelectedFile(e) {
+            if (e) e.stopPropagation();
+            state.selectedFile = null;
+            state.pdfDoc = null;
+            state.imageBase64 = null;
+            fileInput.value = '';
+            previewContainer.classList.add('hidden');
+            previewContainer.classList.remove('flex');
+            dropPlaceholder.classList.remove('hidden');
+        }
+
+        // Exponential Backoff Fetch Helper for Gemini API
+        async function fetchWithBackoff(url, options, maxRetries = 4) {
+            let delay = 1000;
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                    if (response.status === 429 || response.status >= 500) {
+                        if (attempt === maxRetries) throw new Error(`API Error: ${response.status}`);
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2;
+                    } else {
+                        const errBody = await response.text();
+                        throw new Error(`Request failed (${response.status}): ${errBody}`);
+                    }
+                } catch (err) {
+                    if (attempt === maxRetries) throw err;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        // Call Gemini API to Analyze Uploaded Image/PDF Page & Generate Active Recall Flashcards
+        async function startAiAnalysis() {
+            if (!state.imageBase64) {
+                showToast('প্রথমে একটি বইয়ের ছবি বা PDF পেজ আপলোড করুন (অথবা উপরে "ডেমো দেখুন" বাটনে ক্লিক করুন)।', 'warning');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generate-btn');
+            const loadingPanel = document.getElementById('loading-panel');
+            const loadingStep = document.getElementById('loading-step');
+            const customFocus = document.getElementById('custom-focus').value.trim();
+
+            generateBtn.disabled = true;
+            generateBtn.classList.add('opacity-60', 'cursor-not-allowed');
+            loadingPanel.classList.remove('hidden');
+
+            const steps = [
+                'পৃষ্ঠার লেখা, ডায়াগ্রাম এবং মূল পয়েন্টগুলো স্ক্যান করা হচ্ছে...',
+                `পরীক্ষা ও ভাইভা বোর্ডের জন্য বাছাইকৃত ${toBengaliNumber(state.questionCount)}টি প্রশ্ন তৈরি হচ্ছে...`,
+                'সহজবোধ্য উত্তর ও ক্লিনিক্যাল টিপস সাজানো হচ্ছে...'
+            ];
+            let stepIdx = 0;
+            const stepInterval = setInterval(() => {
+                stepIdx = (stepIdx + 1) % steps.length;
+                loadingStep.textContent = steps[stepIdx];
+            }, 2200);
+
+            try {
+                const apiKey = ""; // Runtime environment injects key automatically
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const langInstruction = state.languageMode === 'bn_en'
+                    ? 'Write all questions, answers, and key points in clear, natural Bengali (বাংলা), while keeping important medical, scientific, and technical terms in English (e.g., "Cardiac Output কাকে বলে?", "Myocardial Infarction-এর প্রধান কারণ কী?").'
+                    : 'Write all questions, answers, and key points in clear, concise academic English.';
+
+                const styleInstruction = {
+                    medical: 'Focus on MBBS/Medical high-yield viva voce questions, clinical correlations, mechanisms, definitions, and diagnostic criteria.',
+                    standard: 'Focus on standard academic exam short questions, definitions, differences, and core concepts.',
+                    conceptual: 'Focus on deep conceptual "Why" and "How" reasoning questions to test true understanding.'
+                }[state.difficulty];
+
+                const targetCount = state.questionCount;
+
+                const userPrompt = `Analyze this uploaded study page/note carefully. Generate EXACTLY ${targetCount} high-yield Active Recall flashcards based strictly on the content shown in the image.
+${langInstruction}
+${styleInstruction}
+${customFocus ? `Additional user focus instruction: ${customFocus}` : ''}
+
+Important instructions:
+- You MUST generate ${targetCount} distinct, non-repetitive flashcards covering both major and granular details of the page so that the total count equals ${targetCount}.
+- Make sure each question tests active recall directly (not vague), and each answer is well-structured, concise, and easy to memorize.`;
+
+                const payload = {
+                    contents: [
+                        {
+                            role: "user",
+                            parts: [
+                                { text: userPrompt },
+                                {
+                                    inlineData: {
+                                        mimeType: state.imageMimeType,
+                                        data: state.imageBase64
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                topicTitle: {
+                                    type: "STRING",
+                                    description: "A concise title summarizing the subject/topic of this page."
+                                },
+                                flashcards: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            tag: {
+                                                type: "STRING",
+                                                description: "Short category tag like 'Viva Voce', 'Clinical', 'Definition', 'Mechanism', or 'Exam Must'"
+                                            },
+                                            question: {
+                                                type: "STRING",
+                                                description: "The active recall question."
+                                            },
+                                            answer: {
+                                                type: "STRING",
+                                                description: "Clear, concise, bulleted or structured answer."
+                                            },
+                                            pearl: {
+                                                type: "STRING",
+                                                description: "A short high-yield exam tip, mnemonic, or clinical pearl."
+                                            }
+                                        },
+                                        required: ["tag", "question", "answer", "pearl"]
+                                    }
+                                }
+                            },
+                            required: ["topicTitle", "flashcards"]
+                        }
+                    }
+                };
+
+                const result = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!rawText) throw new Error('AI থেকে সঠিক উত্তর পাওয়া যায়নি।');
+
+                const parsed = JSON.parse(rawText);
+                if (!parsed.flashcards || parsed.flashcards.length === 0) {
+                    throw new Error('এই পেজ থেকে প্রশ্ন তৈরি করা সম্ভব হয়নি। আরও স্পষ্ট ছবি দিন।');
+                }
+
+                state.topicTitle = parsed.topicTitle || 'Active Recall সেশন';
+                state.cards = parsed.flashcards.map((item, index) => ({
+                    id: index + 1,
+                    tag: item.tag || 'High-Yield',
+                    question: item.question,
+                    answer: item.answer,
+                    pearl: item.pearl || 'মূল পয়েন্টটি ভালোভাবে মনে রাখুন।',
+                    status: 'unseen'
+                }));
+
+                launchArena();
+                showToast(`চমৎকার! মোট ${state.cards.length}টি Active Recall প্রশ্ন তৈরি হয়েছে।`, 'success');
+
+            } catch (error) {
+                console.error('AI Analysis Error:', error);
+                showToast('দুঃখিত, অ্যানালাইসিস করতে সমস্যা হয়েছে। ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।', 'error');
+            } finally {
+                clearInterval(stepInterval);
+                generateBtn.disabled = false;
+                generateBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+                loadingPanel.classList.add('hidden');
+            }
+        }
+
+        // Load Sample Medical Demo Cards
+        function loadDemoCards() {
+            state.topicTitle = 'Cardiovascular Physiology: Cardiac Cycle & Output (ডেমো)';
+            const demoPool = [
+                {
+                    id: 1,
+                    tag: 'Viva Voce',
+                    question: 'Cardiac Output (CO) কাকে বলে এবং এর স্বাভাবিক মান কত?',
+                    answer: 'প্রতি মিনিটে Heart-এর প্রতিটি Ventricle যে পরিমাণ রক্ত পাম্প করে বের করে দেয়, তাকে Cardiac Output বলে।\n• সূত্র: CO = Stroke Volume (SV) × Heart Rate (HR)\n• স্বাভাবিক মান: প্রায় 5 Liters/minute (70 ml × 72 beats/min)।',
+                    pearl: 'ব্যায়াম বা উত্তেজনার সময় Cardiac Output বেড়ে 20–25 L/min পর্যন্ত হতে পারে।',
+                    status: 'unseen'
+                },
+                {
+                    id: 2,
+                    tag: 'Clinical Correlation',
+                    question: 'Frank-Starling Law of the Heart কী ব্যাখ্যা করে?',
+                    answer: 'Physiological limit-এর মধ্যে থেকে Venous Return যত বেশি হবে, Heart-এর মাংসপেশি তত বেশি প্রসারিত (stretch) হবে এবং সংকোচনের শক্তি (Force of Contraction) তত বাড়বে। ফলে Stroke Volume বৃদ্ধি পাবে।',
+                    pearl: 'সহজ কথায়: "Heart-এ যত বেশি রক্ত ঢুকবে, Heart তত বেশি রক্ত পাম্প করবে।"',
+                    status: 'unseen'
+                },
+                {
+                    id: 3,
+                    tag: 'Exam Must',
+                    question: 'First Heart Sound (S1) এবং Second Heart Sound (S2) কীভাবে তৈরি হয়?',
+                    answer: '• First Heart Sound ("LUB"): Ventricular systole-এর শুরুতে AV valves (Mitral ও Tricuspid) বন্ধ হওয়ার কারণে তৈরি হয়।\n• Second Heart Sound ("DUB"): Ventricular diastole-এর শুরুতে Semilunar valves (Aortic ও Pulmonary) বন্ধ হওয়ার কারণে তৈরি হয়।',
+                    pearl: 'S1 দীর্ঘ ও নিম্ন স্বরের (0.14 sec), আর S2 সংক্ষিপ্ত ও তীক্ষ্ণ (0.11 sec)।',
+                    status: 'unseen'
+                },
+                {
+                    id: 4,
+                    tag: 'Mechanism',
+                    question: 'Preload এবং Afterload-এর মধ্যে মূল পার্থক্য কী?',
+                    answer: '• Preload: Systole শুরু হওয়ার ঠিক আগে Ventricle-এর পেশিতে যে টান (End-Diastolic Volume) থাকে।\n• Afterload: Ventricle-কে রক্ত পাম্প করার জন্য যে বাধার (Aortic Pressure / Peripheral Resistance) বিরুদ্ধে কাজ করতে হয়।',
+                    pearl: 'Hypertension-এ Afterload বেড়ে যায়, ফলে Left Ventricular Hypertrophy হতে পারে।',
+                    status: 'unseen'
+                },
+                {
+                    id: 5,
+                    tag: 'Clinical',
+                    question: 'SA Node-কে কেন Heart-এর "Natural Pacemaker" বলা হয়?',
+                    answer: 'কারণ Heart-এর অন্যান্য অংশের (AV node, Purkinje fiber) তুলনায় SA Node সবচেয়ে দ্রুত গতিতে (70–80 times/min) স্বতঃস্ফূর্তভাবে Action Potential তৈরি করতে পারে এবং পুরো Heart-এর ছন্দ নিয়ন্ত্রণ করে।',
+                    pearl: 'SA Node নষ্ট হলে AV Node (40–60/min) পেসমেকার হিসেবে কাজ শুরু করে।',
+                    status: 'unseen'
+                },
+                {
+                    id: 6,
+                    tag: 'Viva Voce',
+                    question: 'Stroke Volume (SV) কী এবং এটি কোন ৩টি প্রধান ফ্যাক্টরের ওপর নির্ভর করে?',
+                    answer: 'প্রতিটি Heartbeat-এ প্রতিটি Ventricle যে পরিমাণ রক্ত পাম্প করে (প্রায় 70 ml), তাকে Stroke Volume বলে।\n• নিয়ন্ত্রণকারী ৩টি ফ্যাক্টর: ১) Preload, ২) Contractility (Inotropy), এবং ৩) Afterload।',
+                    pearl: 'SV = End-Diastolic Volume (EDV 120 ml) − End-Systolic Volume (ESV 50 ml)।',
+                    status: 'unseen'
+                },
+                {
+                    id: 7,
+                    tag: 'Exam Must',
+                    question: 'Ejection Fraction (EF) বলতে কী বোঝায় এবং এর স্বাভাবিক মান কত?',
+                    answer: 'End-Diastolic Volume (EDV)-এর যত শতাংশ রক্ত প্রতি বিটে Ventricle থেকে পাম্প হয়ে বের হয়ে যায়, তাকে Ejection Fraction বলে।\n• সূত্র: EF = (SV / EDV) × 100\n• স্বাভাবিক মান: 55% – 70%।',
+                    pearl: 'Heart Failure (HFrEF)-এ Ejection Fraction ৪০%-এর নিচে নেমে যায়।',
+                    status: 'unseen'
+                },
+                {
+                    id: 8,
+                    tag: 'Mechanism',
+                    question: 'AV Nodal Delay কেন অত্যন্ত গুরুত্বপূর্ণ?',
+                    answer: 'AV Node-এ ইম্পালস প্রায় 0.1 second দেরি করে প্রবাহিত হয়। এর ফলে Ventricle সংকুচিত হওয়ার আগেই Atria সম্পূর্ণভাবে সংকুচিত হয়ে রক্ত Ventricle-এ পাঠাতে পর্যাপ্ত সময় পায়।',
+                    pearl: 'এই বিলম্ব না থাকলে Atria ও Ventricle একসাথে সংকুচিত হতো এবং পাম্পিং ব্যাহত হতো।',
+                    status: 'unseen'
+                },
+                {
+                    id: 9,
+                    tag: 'Clinical',
+                    question: 'Coronary Blood Flow কখন সর্বোচ্চ হয়—Systole নাকি Diastole-এ?',
+                    answer: 'Left Ventricle-এর জন্য Coronary Blood Flow সর্বোচ্চ হয় Ventricular Diastole-এর সময়। কারণ Systole-এর সময় তীব্র পেশি সংকোচনের কারণে Coronary রক্তনালীগুলো চাপে সংকুচিত হয়ে থাকে।',
+                    pearl: 'তাই Tachycardia হলে Diastole-এর সময় কমে যায়, যা Myocardial Ischemia বাড়াতে পারে।',
+                    status: 'unseen'
+                },
+                {
+                    id: 10,
+                    tag: 'Definition',
+                    question: 'Mean Arterial Pressure (MAP) নির্ণয়ের সূত্র কী এবং এর গুরুত্ব কী?',
+                    answer: 'MAP = Diastolic Pressure + 1/3 (Pulse Pressure)।\n• স্বাভাবিক মান: প্রায় 93 mmHg (70–100 mmHg)।\n• গুরুত্ব: মস্তিষ্ক ও কিডনির মতো ভাইটাল অর্গানে সঠিক রক্ত প্রবাহ (Perfusion) বজায় রাখার জন্য MAP অন্তত 60 mmHg থাকা জরুরি।',
+                    pearl: 'Diastole সময়কাল Systole-এর চেয়ে দীর্ঘ হওয়ায় MAP-তে Diastolic Pressure-এর প্রভাব বেশি।',
+                    status: 'unseen'
+                }
+            ];
+
+            const requested = state.questionCount;
+            state.cards = demoPool.slice(0, Math.min(requested, demoPool.length)).map((c, idx) => ({
+                ...c,
+                id: idx + 1,
+                status: 'unseen'
+            }));
+
+            launchArena();
+            if (requested > demoPool.length) {
+                showToast(`ডেমো মোডে সর্বোচ্চ ${toBengaliNumber(demoPool.length)}টি প্রশ্ন রয়েছে। বাস্তব বইয়ের পেজ আপলোড করলে AI ঠিক ${toBengaliNumber(requested)}টি প্রশ্নই তৈরি করবে!`, 'info');
+            } else {
+                showToast(`নির্বাচিত ${toBengaliNumber(state.cards.length)}টি ডেমো ফ্ল্যাশকার্ড লোড করা হয়েছে!`, 'info');
+            }
+        }
+
+        // Transition to Flashcard Arena
+        function launchArena() {
+            state.currentIndex = 0;
+            state.isFlipped = false;
+            state.filterWeakOnly = false;
+            state.viewMode = 'single';
+
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('arena-section').classList.remove('hidden');
+            document.getElementById('topic-heading').textContent = state.topicTitle;
+
+            updateArenaUI();
+        }
+
+        function resetToHome() {
+            document.getElementById('arena-section').classList.add('hidden');
+            document.getElementById('upload-section').classList.remove('hidden');
+        }
+
+        // Get Active Deck (All cards or Filtered Weak cards)
+        function getActiveDeck() {
+            if (state.filterWeakOnly) {
+                return state.cards.filter(c => c.status === 'hard');
+            }
+            return state.cards;
+        }
+
+        // Update Card Display, Progress Bar & Controls
+        function updateArenaUI() {
+            const deck = getActiveDeck();
+            const totalAll = state.cards.length;
+            const masteredCount = state.cards.filter(c => c.status === 'mastered').length;
+            const hardCount = state.cards.filter(c => c.status === 'hard').length;
+
+            // Update Progress Bar
+            const pct = totalAll > 0 ? Math.round((masteredCount / totalAll) * 100) : 0;
+            document.getElementById('mastery-bar').style.width = `${pct}%`;
+            document.getElementById('mastery-stats').textContent = `মনে আছে: ${toBengaliNumber(masteredCount)} / ${toBengaliNumber(totalAll)} (${toBengaliNumber(pct)}%)`;
+            document.getElementById('filter-weak-label').textContent = state.filterWeakOnly
+                ? `সব প্রশ্ন দেখুন (${toBengaliNumber(totalAll)})`
+                : `কঠিন প্রশ্ন রিভিউ (${toBengaliNumber(hardCount)})`;
+
+            if (deck.length === 0) {
+                state.filterWeakOnly = false;
+                updateArenaUI();
+                return;
+            }
+
+            if (state.currentIndex >= deck.length) {
+                state.currentIndex = 0;
+            }
+
+            const card = deck[state.currentIndex];
+
+            // Reset Flip State visually without jarring transition when changing card
+            const inner = document.getElementById('flashcard-inner');
+            if (state.isFlipped) {
+                inner.classList.add('is-flipped');
+            } else {
+                inner.classList.remove('is-flipped');
+            }
+
+            // Populate Card Content
+            document.getElementById('card-counter').textContent = `প্রশ্ন ${toBengaliNumber(state.currentIndex + 1)} / ${toBengaliNumber(deck.length)}`;
+            document.getElementById('card-tag').textContent = card.tag;
+            document.getElementById('card-question').textContent = card.question;
+            document.getElementById('card-answer').textContent = card.answer;
+            document.getElementById('card-pearl').textContent = card.pearl;
+
+            // Status Badge on Front
+            const badge = document.getElementById('card-status-badge');
+            if (card.status === 'mastered') {
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                badge.innerHTML = '<i class="fa-solid fa-check mr-1"></i>মনে আছে';
+                badge.classList.remove('hidden');
+            } else if (card.status === 'hard') {
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+                badge.innerHTML = '<i class="fa-solid fa-repeat mr-1"></i>আবার পড়বো';
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // Prev/Next Button States
+            document.getElementById('prev-btn').disabled = state.currentIndex === 0;
+            document.getElementById('next-btn').disabled = state.currentIndex === deck.length - 1;
+
+            // Update Grid View if active
+            renderGridView(deck);
+        }
+
+        function flipCurrentCard() {
+            state.isFlipped = !state.isFlipped;
+            const inner = document.getElementById('flashcard-inner');
+            inner.classList.toggle('is-flipped', state.isFlipped);
+        }
+
+        function nextCard() {
+            const deck = getActiveDeck();
+            if (state.currentIndex < deck.length - 1) {
+                state.isFlipped = false;
+                state.currentIndex++;
+                updateArenaUI();
+            } else {
+                showToast('আপনি শেষ প্রশ্নে পৌঁছে গেছেন!', 'info');
+            }
+        }
+
+        function prevCard() {
+            if (state.currentIndex > 0) {
+                state.isFlipped = false;
+                state.currentIndex--;
+                updateArenaUI();
+            }
+        }
+
+        function markCardStatus(status) {
+            const deck = getActiveDeck();
+            const currentCard = deck[state.currentIndex];
+            if (!currentCard) return;
+
+            // Update in master array
+            const target = state.cards.find(c => c.id === currentCard.id);
+            if (target) target.status = status;
+
+            if (status === 'mastered') {
+                showToast('দারুণ! প্রশ্নটি "মনে আছে" হিসেবে চিহ্নিত হয়েছে।', 'success');
+            } else {
+                showToast('প্রশ্নটি "আবার পড়বো" তালিকায় রাখা হয়েছে।', 'warning');
+            }
+
+            // Auto-advance to next card smoothly
+            const updatedDeck = getActiveDeck();
+            if (updatedDeck.length === 0) {
+                state.filterWeakOnly = false;
+                showToast('সব কঠিন প্রশ্ন রিভিউ সম্পন্ন হয়েছে!', 'success');
+            } else if (state.currentIndex < updatedDeck.length - 1) {
+                state.currentIndex++;
+            }
+            state.isFlipped = false;
+            updateArenaUI();
+        }
+
+        function toggleWeakFilter() {
+            const hardCount = state.cards.filter(c => c.status === 'hard').length;
+            if (!state.filterWeakOnly && hardCount === 0) {
+                showToast('এখনও কোনো প্রশ্ন "আবার পড়বো (Hard)" হিসেবে চিহ্নিত করা হয়নি।', 'info');
+                return;
+            }
+            state.filterWeakOnly = !state.filterWeakOnly;
+            state.currentIndex = 0;
+            state.isFlipped = false;
+            updateArenaUI();
+        }
+
+        function toggleArenaView() {
+            const singleView = document.getElementById('single-card-view');
+            const gridView = document.getElementById('grid-cards-view');
+            const label = document.getElementById('view-toggle-label');
+
+            if (state.viewMode === 'single') {
+                state.viewMode = 'grid';
+                singleView.classList.add('hidden');
+                gridView.classList.remove('hidden');
+                label.textContent = '3D ফ্লিপ কার্ড মোড';
+            } else {
+                state.viewMode = 'single';
+                gridView.classList.add('hidden');
+                singleView.classList.remove('hidden');
+                label.textContent = 'সব প্রশ্ন একসাথে দেখুন';
+            }
+        }
+
+        function renderGridView(deck) {
+            const grid = document.getElementById('grid-cards-view');
+            grid.innerHTML = '';
+
+            deck.forEach((card, idx) => {
+                const el = document.createElement('div');
+                el.className = 'bg-[#161224] border border-purple-500/25 rounded-2xl p-5 flex flex-col justify-between gap-3 hover:border-purpleAccent/60 transition';
+                el.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-2.5">
+                            <span class="text-xs font-bold text-purple-300">প্রশ্ন ${toBengaliNumber(idx + 1)}</span>
+                            <span class="px-2.5 py-0.5 rounded-full bg-purplePrimary/20 text-purpleAccent text-[11px] font-en font-semibold">${card.tag}</span>
+                        </div>
+                        <h4 class="text-base font-bold text-white mb-3 leading-snug">${card.question}</h4>
+                    </div>
+                    <details class="group bg-[#0B0914] rounded-xl border border-purple-500/20 p-3">
+                        <summary class="text-xs font-semibold text-purpleAccent cursor-pointer list-none flex items-center justify-between">
+                            <span>উত্তর দেখতে ক্লিক করুন</span>
+                            <i class="fa-solid fa-chevron-down group-open:rotate-180 transition-transform"></i>
+                        </summary>
+                        <div class="mt-2.5 pt-2.5 border-t border-purple-500/15 text-xs sm:text-sm text-gray-200 whitespace-pre-line leading-relaxed">
+                            ${card.answer}
+                            <div class="mt-2 p-2 rounded-lg bg-purple-950/50 text-purple-200 text-xs">
+                                <strong>টিপস:</strong> ${card.pearl}
+                            </div>
+                        </div>
+                    </details>
+                `;
+                grid.appendChild(el);
+            });
+        }
+
+        // Helper: Convert English digits to Bengali digits
+        function toBengaliNumber(num) {
+            const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+            return String(num).replace(/\d/g, d => bnDigits[d]);
+        }
+
+        // Keyboard Shortcuts for Active Recall Speed
+        document.addEventListener('keydown', (e) => {
+            const arenaVisible = !document.getElementById('arena-section').classList.contains('hidden');
+            if (!arenaVisible || state.viewMode !== 'single') return;
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+
+            if (e.code === 'Space' || e.code === 'Enter') {
+                e.preventDefault();
+                flipCurrentCard();
+            } else if (e.code === 'ArrowRight') {
+                e.preventDefault();
+                nextCard();
+            } else if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                prevCard();
+            }
+        });
+    </script>
+</body>
+</html>
